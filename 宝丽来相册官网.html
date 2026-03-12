@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolaBox - 珍藏每一份宝丽来的温度</title>
+    <meta name="description" content="PolaBox - 专业的宝丽来照片管理应用，珍藏每一份宝丽来的温度">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #8b5cf6;
+            --accent: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.5);
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.05);
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 28px;
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* 动态背景 */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .ambient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 30% at 50% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            animation: ambientMove 20s ease-in-out infinite;
+        }
+
+        .ambient-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 40%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes ambientMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 网格背景 */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* 导航 */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 72px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 1px;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .download-btn {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Hero区域 */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 140px 24px 100px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 32px;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: clamp(48px, 10vw, 80px);
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 50%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .hero p {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+            font-weight: 400;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+        }
+
+        .hero .download-btn {
+            padding: 16px 40px;
+            font-size: 16px;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease 0.4s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 功能区域 */
+        .features {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 80px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 40px 32px;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: var(--radius-sm);
+            font-size: 28px;
+            margin-bottom: 24px;
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        /* 展示区域 */
+        .showcase {
+            padding: 120px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .showcase-devices {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 32px;
+            padding: 60px 20px;
+            flex-wrap: wrap;
+            perspective: 1000px;
+        }
+
+        .device-frame {
+            position: relative;
+            background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
+            border-radius: 44px;
+            padding: 14px;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 25px 80px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(99, 102, 241, 0.1);
+            transition: var(--transition);
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        .device-frame:hover {
+            transform: translateY(-20px) rotateX(5deg);
+            box-shadow: 
+                0 0 0 1px rgba(99, 102, 241, 0.3),
+                0 40px 100px rgba(0, 0, 0, 0.6),
+                0 0 80px rgba(99, 102, 241, 0.2);
+            z-index: 50;
+        }
+
+        .device-frame::before {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 26px;
+            background: #0a0a0f;
+            border-radius: 0 0 18px 18px;
+            z-index: 10;
+        }
+
+        .device-screen {
+            width: 220px;
+            height: 476px;
+            background: #000;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .device-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .device-glow {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 40px;
+            background: radial-gradient(ellipse, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+            filter: blur(20px);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .device-frame:hover .device-glow {
+            opacity: 1;
+        }
+
+        .device-label {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .device-frame:hover .device-label {
+            opacity: 1;
+            bottom: -40px;
+        }
+
+        /* 交错排列 - 递增z-index确保前面的不会被子面的遮挡 */
+        .device-frame:nth-child(1) { transform: translateY(0) rotate(-3deg); z-index: 6; }
+        .device-frame:nth-child(2) { transform: translateY(30px) rotate(0deg); z-index: 5; }
+        .device-frame:nth-child(3) { transform: translateY(0) rotate(3deg); z-index: 4; }
+        .device-frame:nth-child(4) { transform: translateY(30px) rotate(-2deg); z-index: 3; }
+        .device-frame:nth-child(5) { transform: translateY(0) rotate(2deg); z-index: 2; }
+        .device-frame:nth-child(6) { transform: translateY(30px) rotate(0deg); z-index: 1; }
+
+        .device-frame:nth-child(1):hover { transform: translateY(-20px) rotateX(5deg) rotate(0deg); z-index: 100; }
+        .device-frame:nth-child(2):hover { transform: translateY(-10px) rotateX(5deg) rotate(0deg); z-index: 100; }
+        .device-frame:nth-child(3):hover { transform: translateY(-20px) rotateX(5deg) rotate(0deg); z-index: 100; }
+        .device-frame:nth-child(4):hover { transform: translateY(-10px) rotateX(5deg) rotate(0deg); z-index: 100; }
+        .device-frame:nth-child(5):hover { transform: translateY(-20px) rotateX(5deg) rotate(0deg); z-index: 100; }
+        .device-frame:nth-child(6):hover { transform: translateY(-10px) rotateX(5deg) rotate(0deg); z-index: 100; }
+
+        /* 导出展示 - 艺术框架设计 */
+        .export-showcase {
+            padding: 160px 0;
+            text-align: center;
+            position: relative;
+            overflow: visible;
+        }
+
+        .export-composition {
+            position: relative;
+            max-width: 1200px;
+            margin: 100px auto 0;
+            height: 700px;
+            perspective: 1500px;
+        }
+
+        /* 大外框 - 艺术边框 */
+        .art-frame-outer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1000px;
+            height: 600px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 40px;
+            background: linear-gradient(135deg, 
+                rgba(99, 102, 241, 0.05) 0%, 
+                transparent 50%,
+                rgba(6, 182, 212, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            z-index: 1;
+        }
+
+        .art-frame-outer::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 32px;
+            pointer-events: none;
+        }
+
+        /* 角落装饰 */
+        .corner-decoration {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(99, 102, 241, 0.4);
+            z-index: 2;
+        }
+
+        .corner-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
+        .corner-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; border-radius: 0 8px 0 0; }
+        .corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; border-radius: 0 0 0 8px; }
+        .corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
+
+        /* 背景光晕 */
+        .export-bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            height: 700px;
+            background: 
+                radial-gradient(ellipse 60% 50% at 30% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 70% 60%, rgba(6, 182, 212, 0.12) 0%, transparent 50%);
+            pointer-events: none;
+            animation: glowPulse 6s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* 九宫格照片 */
+        .export-polaroid-grid {
+            position: absolute;
+            top: 15%;
+            left: 18%;
+            transform: translateZ(20px) rotateY(5deg);
+            width: 340px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 
+                0 60px 120px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                0 0 100px rgba(99, 102, 241, 0.2);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 5;
+        }
+
+        .export-polaroid-grid:hover {
+            transform: translateZ(60px) rotateY(0deg) scale(1.03);
+            box-shadow: 
+                0 80px 160px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(99, 102, 241, 0.4),
+                0 0 140px rgba(99, 102, 241, 0.3);
+        }
+
+        .export-polaroid-grid::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .export-polaroid-grid img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* 手机界面 */
+        .export-phone-mockup {
+            position: absolute;
+            top: 18%;
+            right: 18%;
+            transform: translateZ(40px);
+            z-index: 4;
+        }
+
+        .export-phone-frame {
+            position: relative;
+            background: linear-gradient(160deg, #1e1e3a 0%, #0d0d18 50%, #1a1a2e 100%);
+            border-radius: 50px;
+            padding: 16px;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.12),
+                0 60px 120px rgba(0, 0, 0, 0.7),
+                0 0 100px rgba(99, 102, 241, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .export-phone-frame:hover {
+            transform: translateZ(30px) rotateY(-5deg);
+            box-shadow: 
+                0 0 0 1px rgba(99, 102, 241, 0.4),
+                0 80px 160px rgba(0, 0, 0, 0.8),
+                0 0 140px rgba(99, 102, 241, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .export-phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 28px;
+            background: #0a0a0f;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .export-phone-screen {
+            width: 280px;
+            height: 606px;
+            background: #000;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .export-phone-screen::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.2) 100%);
+            pointer-events: none;
+            border-radius: 40px;
+        }
+
+        .export-phone-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 玻璃卡片 - 浮动信息 */
+        .glass-card {
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 20px 28px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* 玻璃卡片容器 */
+        .glass-card-wrapper {
+            position: absolute;
+            padding: 3px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(6, 182, 212, 0.5));
+            border-radius: 22px;
+            z-index: 10;
+        }
+
+        .glass-card-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(6, 182, 212, 0.3));
+            border-radius: 22px;
+            filter: blur(10px);
+            z-index: -1;
+        }
+
+        /* 一键分享 - 叠加在手机右上角 */
+        .glass-card-1 {
+            top: 8%;
+            right: 12%;
+        }
+
+        /* 高清导出 - 叠加在九宫格右下角 */
+        .glass-card-2 {
+            top: 50%;
+            left: 35%;
+        }
+
+        .glass-card-wrapper:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        .glass-card-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .glass-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .glass-card-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 粒子装饰 */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            opacity: 0.6;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .particle-1 { top: 20%; left: 10%; animation-delay: 0s; }
+        .particle-2 { top: 70%; right: 15%; animation-delay: 2s; }
+        .particle-3 { bottom: 30%; left: 20%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+            50% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+        }
+
+        /* 连接线 - 连接九宫格和手机 */
+        .connection-line {
+            position: absolute;
+            top: 35%;
+            left: 40%;
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(99, 102, 241, 0.8) 20%, 
+                rgba(6, 182, 212, 0.8) 50%, 
+                rgba(99, 102, 241, 0.8) 80%, 
+                transparent 100%);
+            transform: rotate(-25deg);
+            z-index: 2;
+            opacity: 0.6;
+            animation: linePulse 3s ease-in-out infinite;
+        }
+
+        .connection-line::before,
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--accent);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .connection-line::before {
+            left: 0;
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+
+        .connection-line::after {
+            right: 0;
+            animation: dotPulse 2s ease-in-out infinite 1s;
+        }
+
+        @keyframes linePulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.8; }
+            50% { transform: translateY(-50%) scale(1.5); opacity: 1; box-shadow: 0 0 25px var(--accent); }
+        }
+
+        /* 流动箭头 */
+        .flow-arrow {
+            position: absolute;
+            top: 32%;
+            left: 48%;
+            width: 60px;
+            height: 60px;
+            z-index: 5;
+        }
+
+        .flow-arrow svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));
+            animation: arrowFloat 2s ease-in-out infinite;
+        }
+
+        .flow-arrow path {
+            stroke: url(#arrowGradient);
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        @keyframes arrowFloat {
+            0%, 100% { transform: translateX(0); opacity: 0.8; }
+            50% { transform: translateX(10px); opacity: 1; }
+        }
+
+        /* Footer */
+        footer {
+            padding: 80px 0 40px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        footer p {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        footer a:hover {
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .showcase-devices {
+                gap: 24px;
+            }
+
+            .device-frame {
+                padding: 10px;
+                border-radius: 32px;
+            }
+
+            .device-screen {
+                width: 160px;
+                height: 346px;
+                border-radius: 26px;
+            }
+
+            .device-frame::before {
+                width: 70px;
+                height: 20px;
+                top: 22px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav .container {
+                height: 64px;
+            }
+
+            .nav-links {
+                gap: 20px;
+            }
+
+            .nav-links a:not(.download-btn) {
+                display: none;
+            }
+
+            .hero {
+                padding: 120px 20px 80px;
+            }
+
+            .features {
+                padding: 80px 0;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .feature-card {
+                padding: 32px 24px;
+            }
+
+            .showcase {
+                padding: 80px 0;
+            }
+
+            .showcase-devices {
+                gap: 16px;
+                padding: 40px 16px;
+            }
+
+            .device-frame {
+                padding: 8px;
+                border-radius: 28px;
+            }
+
+            .device-screen {
+                width: 130px;
+                height: 281px;
+                border-radius: 22px;
+            }
+
+            .device-frame::before {
+                width: 55px;
+                height: 16px;
+                top: 18px;
+            }
+
+            .export-composition {
+                height: 550px;
+            }
+
+            .art-frame-outer {
+                width: 700px;
+                height: 450px;
+            }
+
+            .corner-decoration {
+                width: 25px;
+                height: 25px;
+            }
+
+            .export-polaroid-grid {
+                width: 200px;
+                left: 12%;
+                top: 12%;
+            }
+
+            .export-phone-mockup {
+                right: 12%;
+                top: 15%;
+            }
+
+            .connection-line {
+                width: 120px;
+                top: 30%;
+                left: 38%;
+            }
+
+            .flow-arrow {
+                width: 40px;
+                height: 40px;
+                top: 28%;
+                left: 46%;
+            }
+
+            .glass-card-1 {
+                top: 5%;
+                right: 8%;
+            }
+
+            .glass-card-2 {
+                top: 45%;
+                left: 30%;
+            }
+
+            .export-phone-frame {
+                padding: 12px;
+                border-radius: 36px;
+            }
+
+            .export-phone-screen {
+                width: 200px;
+                height: 433px;
+                border-radius: 30px;
+            }
+
+            .export-phone-frame::before {
+                width: 70px;
+                height: 20px;
+                top: 24px;
+            }
+
+            .glass-card-wrapper {
+                 padding: 2px;
+                 border-radius: 14px;
+             }
+
+             .glass-card {
+                 padding: 12px 16px;
+                 border-radius: 12px;
+             }
+
+             .glass-card-icon {
+                 width: 32px;
+                 height: 32px;
+                 font-size: 16px;
+                 border-radius: 10px;
+             }
+
+             .glass-card-title {
+                 font-size: 12px;
+             }
+
+             .glass-card-desc {
+                 font-size: 9px;
+             }
+
+             .glass-card-1 {
+                 top: 5%;
+                 right: 8%;
+             }
+
+             .glass-card-2 {
+                 top: 45%;
+                 left: 30%;
+             }
+         }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .device-screen {
+                width: 110px;
+                height: 238px;
+                border-radius: 18px;
+            }
+
+            .device-frame::before {
+                width: 45px;
+                height: 14px;
+                top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+    <div class="grid-overlay"></div>
+
+    <nav>
+        <div class="container">
+            <div class="logo">PolaBox</div>
+            <div class="nav-links">
+                <a href="#features">功能</a>
+                <a href="#showcase">展示</a>
+                <a href="#export">导出</a>
+                <a href="download/PolaBox.apk" class="download-btn" download="PolaBox.apk">下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">现已上线</div>
+            <h1>珍藏每一份<br>宝丽来的温度</h1>
+            <p>用数字，让每一份瞬间都被温柔珍藏。专业的宝丽来照片管理工具，从拍摄到精选，从统计到导出。</p>
+            <a href="download/PolaBox.apk" class="download-btn" download="PolaBox.apk">下载 PolaBox</a>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">核心功能</h2>
+            <p class="section-subtitle">专为宝丽来爱好者打造的数字化管理方案</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3>年份记忆管理</h3>
+                    <p>按年份沉淀美好回忆，滑动切换年份视图，清晰看见时光轨迹，拍摄、耗材、精选、废片数据一目了然。</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎞️</div>
+                    <h3>相纸盒子管理</h3>
+                    <p>彩色/黑白相纸分类管理，实时查看每盒相纸拍摄进度，宝丽来相纸卡片式展示，还原胶片质感。</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>极简照片编辑</h3>
+                    <p>3x3宫格布局展示，支持批量添加、单张编辑，轻松记录每一张照片的故事，编辑封面、分享一键操作。</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>拍摄数据统计</h3>
+                    <p>月度拍摄趋势折线图、盒子完成度分布，毛玻璃环形图表展示，直观看见你的创作节奏。</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <h3>双主题适配</h3>
+                    <p>Light/Dark毛玻璃开关切换，iOS风格主题适配，支持导出九宫格、高清图片，满足不同使用场景。</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>安全备份导出</h3>
+                    <p>支持多种导出格式与图片质量选择，毛玻璃风格设置界面，保障数据安全，操作简洁高效。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="showcase" id="showcase">
+        <div class="container">
+            <h2 class="section-title">应用展示</h2>
+            <p class="section-subtitle">精致界面，流畅体验</p>
+            <div class="showcase-devices">
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/主页.png" alt="首页" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">首页</div>
+                </div>
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/耗材.png" alt="盒子管理" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">盒子管理</div>
+                </div>
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/统计.png" alt="数据统计" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">数据统计</div>
+                </div>
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/主题.png" alt="主题切换" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">主题切换</div>
+                </div>
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/备份与恢复.png" alt="备份与恢复" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">备份与恢复</div>
+                </div>
+                <div class="device-frame">
+                    <div class="device-screen">
+                        <img src="img/设置.png" alt="设置" loading="lazy">
+                    </div>
+                    <div class="device-glow"></div>
+                    <div class="device-label">设置</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="export-showcase" id="export">
+        <div class="container">
+            <h2 class="section-title">导出效果</h2>
+            <p class="section-subtitle">精美九宫格，分享你的创作</p>
+            <div class="export-composition">
+                <!-- SVG渐变定义 -->
+                <svg width="0" height="0" style="position: absolute;">
+                    <defs>
+                        <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                
+                <!-- 背景光晕 -->
+                <div class="export-bg-glow"></div>
+                
+                <!-- 大外框 -->
+                <div class="art-frame-outer">
+                    <!-- 角落装饰 -->
+                    <div class="corner-decoration corner-tl"></div>
+                    <div class="corner-decoration corner-tr"></div>
+                    <div class="corner-decoration corner-bl"></div>
+                    <div class="corner-decoration corner-br"></div>
+                </div>
+                
+                <!-- 粒子装饰 -->
+                <div class="particle particle-1"></div>
+                <div class="particle particle-2"></div>
+                <div class="particle particle-3"></div>
+                
+                <!-- 连接线 -->
+                <div class="connection-line"></div>
+                
+                <!-- 流动箭头 -->
+                <div class="flow-arrow">
+                    <svg viewBox="0 0 60 60">
+                        <path d="M10 30 L40 30 M30 20 L40 30 L30 40" />
+                    </svg>
+                </div>
+                
+                <!-- 九宫格照片 - 左侧 -->
+                <div class="export-polaroid-grid">
+                    <img src="img/九宫格.jpg" alt="九宫格导出" loading="lazy">
+                </div>
+                
+                <!-- 手机界面 - 右侧 -->
+                <div class="export-phone-mockup">
+                    <div class="export-phone-frame">
+                        <div class="export-phone-screen">
+                            <img src="img/导出九宫格.jpg" alt="导出界面" loading="lazy">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 玻璃卡片 - 一键分享 -->
+                <div class="glass-card-wrapper glass-card-1">
+                    <div class="glass-card">
+                        <div class="glass-card-icon">📤</div>
+                        <div class="glass-card-title">一键分享</div>
+                        <div class="glass-card-desc">快速导出到社交平台</div>
+                    </div>
+                </div>
+                
+                <!-- 玻璃卡片 - 高清导出 -->
+                <div class="glass-card-wrapper glass-card-2">
+                    <div class="glass-card">
+                        <div class="glass-card-icon">✨</div>
+                        <div class="glass-card-title">高清导出</div>
+                        <div class="glass-card-desc">保留原始画质细节</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 PolaBox. 保留所有权利</p>
+            <p>适配 iOS / Android</p>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .device-frame, .export-polaroid-grid, .export-phone-mockup, .glass-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(40px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
